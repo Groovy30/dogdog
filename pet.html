@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Virtual Pet Clicker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(120deg, #ffdde1, #ee9ca7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 500px;
+      width: 90%;
+      padding: 20px;
+      margin-top: 30px;
+      text-align: center;
+      background: rgba(255,255,255,0.9);
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 2em;
+      color: #d63384;
+      margin-bottom: 10px;
+    }
+
+    #pet {
+      width: 70%;
+      max-width: 250px;
+      animation: float 3s ease-in-out infinite;
+      transition: transform 0.2s;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+      100% { transform: translateY(0); }
+    }
+
+    #mood {
+      font-size: 1.2em;
+      color: #ff4081;
+      margin: 10px 0;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    button {
+      background: #ff80ab;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 30px;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+      box-shadow: 0 4px #c94f7c;
+      transition: 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px #c94f7c;
+    }
+
+    input[type="text"] {
+      padding: 10px 15px;
+      border: 2px solid #ff80ab;
+      border-radius: 25px;
+      font-size: 1em;
+      margin: 10px 0;
+      width: 80%;
+    }
+
+    #happiness-bar {
+      width: 100%;
+      background: #ffdbe8;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 20px;
+      margin-top: 15px;
+    }
+
+    #happiness-fill {
+      width: 70%;
+      height: 100%;
+      background-color: #ff4081;
+      transition: width 0.3s;
+    }
+
+    .emoji-float {
+      position: absolute;
+      font-size: 2rem;
+      animation: rise 1s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes rise {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-80px); }
+    }
+
+    @media (max-width: 500px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      button {
+        font-size: 0.9em;
+        padding: 10px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1><span id="pet-name-title">🐶 Your Pet</span></h1>
+    <img id="pet" src="https://img.icons8.com/clouds/500/dog.png" alt="Pet" onerror="this.src='dog.png'">
+    <div id="mood">Mood: Happy 😊</div>
+    <div id="happiness-bar">
+      <div id="happiness-fill"></div>
+    </div>
+
+    <input type="text" id="pet-name-input" placeholder="Name your pet..." maxlength="12" />
+
+    <div class="buttons">
+      <button onclick="feedPet()">🍎 Feed</button>
+      <button onclick="petPet()">🤗 Pet</button>
+      <button onclick="dressUp()">👗 Dress</button>
+      <button onclick="resetGame()">🔁 Reset</button>
+    </div>
+  </div>
+
+  <!-- Sounds -->
+  <audio id="sound-click">
+    <source src="https://www.soundjay.com/button/beep-07.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const pet = document.getElementById("pet");
+    const mood = document.getElementById("mood");
+    const happinessFill = document.getElementById("happiness-fill");
+    const nameInput = document.getElementById("pet-name-input");
+    const nameTitle = document.getElementById("pet-name-title");
+    const clickSound = document.getElementById("sound-click");
+
+    let happiness = parseInt(localStorage.getItem("happiness")) || 70;
+    let outfit = localStorage.getItem("outfit") === "true";
+    let petName = localStorage.getItem("petName") || "";
+
+    if (petName) {
+      nameTitle.textContent = `🐶 ${petName}`;
+      nameInput.value = petName;
+    }
+
+    if (outfit) {
+      pet.src = "https://img.icons8.com/clouds/500/dog-jump.png";
+    }
+
+    nameInput.addEventListener("input", () => {
+      const name = nameInput.value.trim();
+      nameTitle.textContent = name ? `🐶 ${name}` : "🐶 Your Pet";
+      localStorage.setItem("petName", name);
+    });
+
+    function updateHappiness() {
+      happiness = Math.min(100, Math.max(0, happiness));
+      happinessFill.style.width = `${happiness}%`;
+
+      if (happiness > 80) {
+        mood.textContent = "Mood: Ecstatic 😍";
+      } else if (happiness > 50) {
+        mood.textContent = "Mood: Happy 😊";
+      } else if (happiness > 30) {
+        mood.textContent = "Mood: Meh 😐";
+      } else {
+        mood.textContent = "Mood: Sad 😢";
+      }
+
+      localStorage.setItem("happiness", happiness);
+    }
+
+    function animatePet() {
+      pet.style.transform = "scale(1.05)";
+      setTimeout(() => pet.style.transform = "scale(1)", 150);
+    }
+
+    function playSound() {
+      clickSound.currentTime = 0;
+      clickSound.play().catch(() => {}); // prevent errors
+    }
+
+    function floatEmoji(emoji) {
+      const el = document.createElement("span");
+      el.textContent = emoji;
+      el.className = "emoji-float";
+      el.style.left = `${Math.random() * 80 + 10}%`;
+      el.style.bottom = "80px";
+      document.body.appendChild(el);
+      setTimeout(() => document.body.removeChild(el), 1000);
+    }
+
+    function feedPet() {
+      floatEmoji("🍎");
+      happiness += 10;
+      updateHappiness();
+      animatePet();
+      playSound();
+    }
+
+    function petPet() {
+      floatEmoji("💕");
+      happiness += 15;
+      updateHappiness();
+      animatePet();
+      playSound();
+    }
+
+    function dressUp() {
+      outfit = !outfit;
+      pet.src = outfit
+        ? "https://img.icons8.com/clouds/500/dog-jump.png"
+        : "https://img.icons8.com/clouds/500/dog.png";
+      floatEmoji("👗");
+      animatePet();
+      playSound();
+      localStorage.setItem("outfit", outfit);
+    }
+
+    function resetGame() {
+      localStorage.clear();
+      happiness = 70;
+      outfit = false;
+      nameInput.value = "";
+      nameTitle.textContent = "🐶 Your Pet";
+      pet.src = "https://img.icons8.com/clouds/500/dog.png";
+      updateHappiness();
+    }
+
+    // Passive mood drop over time
+    setInterval(() => {
+      happiness -= 1;
+      updateHappiness();
+    }, 15000);
+
+    updateHappiness(); // Initialize
+  </script>
+</body>
+</html>
